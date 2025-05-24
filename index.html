@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My daily Planner</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 10px 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 18px;
+            width: 250px;
+            transition: all 0.3s;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #5dade2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #task-list {
+            margin-top: 20px;
+        }
+
+        ol {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ecf0f1;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 20px;
+            transition: background 0.3s;
+        }
+
+        li.completed {
+            text-decoration: line-through;
+            background-color: #d5f5e3;
+        }
+
+        li button {
+            background-color: #e74c3c;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 16px;
+            margin: 5px;
+        }
+
+        select {
+            padding: 10px 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 18px;
+            width: 250px;
+            transition: all 0.3s;
+        }
+
+        #back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: none
+        }
+    </style>
+
+<body>
+
+    </head>
+    <div id="root">
+        <div class="container">
+            <div>
+                <h1>My Daily Planner</h1>
+            </div>
+
+            <form action>
+                <div>
+                    <label for="task">Task : </label>
+                    <input type="text" placeholder="Enter a new task" id="new-task">
+                    <select id="task-category">
+                        <option value="Personal">Personal</option>
+                        <option value="Work">Work</option>
+                        <option value="Study">Study</option>
+                    </select>
+                    <button type="submit" id="add-btn">Add</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="Search tasks..." id="search-task">
+                </div>
+            </form>
+            <h2>Task List</h2>
+            <div id="task-list">
+
+            </div>
+            <button id="clear-btn">Clear</button>
+            <button id="back-to-top">Back to Top</button>
+        </div>
+    </div>
+</body>
+
+<script>
+    let root = document.getElementById("root");
+    let newTask = document.getElementById("new-task");
+    let taskCategory = document.getElementById("task-category");
+    let addBtn = document.getElementById("add-btn");
+    let taskList = document.getElementById("task-list")
+    let searchTask = document.getElementById("search-task");
+    let clearAll = document.getElementById("clear-btn");
+    let backToTop = document.getElementById("back-to-top");
+
+
+
+    let task = [...JSON.parse(localStorage.getItem("tasks")) || ""];
+
+    renderTasks(task);
+
+    addBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (newTask.value === "") return alert("Please enter a task");
+        task.push({
+            text: newTask.value,
+            category: taskCategory.value,
+            completed: false
+        });
+        localStorage.setItem("tasks", JSON.stringify(task));
+        newTask.value = "";
+        renderTasks(JSON.parse(localStorage.getItem("tasks")));
+        console.log(task)
+    });
+
+    function renderTasks(tasks) {
+        taskList.innerHTML = "";
+        if (tasks.length === 0) return
+
+        let ol = document.createElement("ol");
+
+        tasks.forEach((task, index) => {
+
+            let div = document.createElement("div");
+            let div1 = document.createElement("div");
+            div1.className = "flex-join";
+
+
+            let li = document.createElement("li");
+            li.className = task.completed ? "completed" : "";
+
+            let text = document.createElement("span");
+            text.textContent = `${task.text} [${task.category}]`;
+
+            let completeBtn = document.createElement("button");
+            completeBtn.textContent = task.completed ? "Not-completed" : "Completed";
+            completeBtn.className = task.completed ? "completed" : "";
+            completeBtn.style.backgroundColor = task.completed ? "blue" : "green";
+            completeBtn.addEventListener("click", () => completeHandler(index));
+
+            let delBtn = document.createElement("button");
+            delBtn.textContent = "Delete";
+            delBtn.addEventListener("click", () => deleteHandler(index));
+
+            li.appendChild(text);
+            div1.appendChild(completeBtn);
+            div1.appendChild(delBtn);
+            li.appendChild(div1);
+            div.appendChild(li);
+            ol.append(div);
+            taskList.appendChild(ol);
+
+        });
+    }
+
+    function deleteHandler(index) {
+        task.splice(index, 1);
+        localStorage.setItem("tasks", JSON.stringify(task));
+        renderTasks(JSON.parse(localStorage.getItem("tasks")));
+    }
+
+    let debounceTimer;
+
+    searchTask.addEventListener("input", () => {
+
+        clearTimeout(debounceTimer);
+
+        debounceTimer = setTimeout(() => {
+            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            const searchText = searchTask.value.toLowerCase();
+            const filteredTasks = tasks.filter(task => task.text.toLowerCase().includes(searchText));
+
+            if (filteredTasks.length === 0) {
+                searchTask.value = "";
+                renderTasks(tasks);
+                return alert("No tasks found");
+            }
+
+            renderTasks(filteredTasks);
+        }, 500); // Debounce delay in milliseconds
+    });
+
+
+    clearAll.addEventListener("click", () => {
+        localStorage.clear();
+        task = []
+        renderTasks(task);
+    });
+
+    function completeHandler(index) {
+        task[index].completed = !task[index].completed;
+        localStorage.setItem("tasks", JSON.stringify(task));
+        renderTasks(JSON.parse(localStorage.getItem("tasks")));
+
+    }
+
+    let isScrolling = false;
+
+    function throttle(func, limit) {
+        return function () {
+            if (!isScrolling) {
+                isScrolling = true;
+                func(); 
+                console.log(window.scrollY); 
+                setTimeout(() => {
+                    isScrolling = false;
+                }, limit);
+            }
+        };
+    }
+
+
+    function checkThrottle() {
+        if (window.scrollY > 300) {
+            backToTop.style.display = "block";
+        } else {
+            backToTop.style.display = "none";
+        }
+    }
+
+    window.addEventListener("scroll", throttle(checkThrottle, 200));
+
+
+
+
+    backToTop.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+
+</script>
+
+</html>
