@@ -239,7 +239,7 @@
             }
 
             renderTasks(filteredTasks);
-        }, 500); // Debounce delay in milliseconds
+        }, 500);
     });
 
 
@@ -262,8 +262,8 @@
         return function () {
             if (!isScrolling) {
                 isScrolling = true;
-                func(); 
-                console.log(window.scrollY); 
+                func();
+                console.log(window.scrollY);
                 setTimeout(() => {
                     isScrolling = false;
                 }, limit);
